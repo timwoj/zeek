@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    allow:
+      - dependency-name: "auxil/c-ares"
+      - dependency-name: "auxil/filesystem"
+      - dependency-name: "auxil/highwayhash"
+      - dependency-name: "auxil/libkqueue"
+      - dependency-name: "auxil/libunistd"
+      - dependency-name: "auxil/out_ptr"
+      - dependency-name: "auxil/prometheus-cpp"
+      - dependency-name: "auxil/rapidjson"
+      - dependency-name: "auxil/vcpkg"
+    schedule:
+      interval: "weekly"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
