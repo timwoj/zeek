@@ -1,0 +1,31 @@
+name: CodSpeed
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  codspeed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build benchmarks
+        run: |
+          cd benchmarks
+          mkdir build
+          cd build
+          cmake -DCODSPEED_MODE=simulation -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+          make -j$(nproc)
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: ./benchmarks/build/zeek_benchmarks
