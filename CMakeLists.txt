@@ -1405,6 +1405,7 @@ endif ()
 
 if (NOT ZEEK_BUILD_INFO_RESULT EQUAL "0")
     message(FATAL_ERROR "Could not collect repository info")
+    message(STATUS "${ZEEK_BUILD_INFO}")
 endif ()
 
 # string(JSON ... ) requires CMake 3.19, but then we could do something like:
