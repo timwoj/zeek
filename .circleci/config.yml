@@ -12,6 +12,7 @@ jobs:
       ZEEK_CI_CONFIGURE_FLAGS: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
       ZEEK_CI_CPUS: 4
       ZEEK_CI_BTEST_JOBS: 2
+      ZEEK_CI_BTEST_RETRIES: 2
       ZEEK_CI_RUNNER_OS: linux
       ZEEK_TEST_ULIMIT_OPEN_FILES: 256
     docker:
@@ -69,10 +70,30 @@ jobs:
       - run:
           name: Update submodules
           command: git submodule update --recursive --init
+      - restore_cache:
+          keys:
+            - ccache-{{ .Branch }}-{{ .Revision }}
+            - ccache-{{ .Branch }}-
+            - ccache-
+      - run:
+          name: Setup ccache
+          command: |
+            mkdir -p ~/.ccache
+            ccache --set-config=max_size=2G
+            ccache --set-config=compression=true
+            ccache --zero-stats
+            ccache --show-stats
       - run:
           name: Build
           command: ci/build.sh
           environment:
+      - run:
+          name: Show ccache statistics
+          command: ccache --show-stats
+      - save_cache:
+          key: ccache-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ~/.ccache
       - run:
           name: Test
           command: ci/test.sh
