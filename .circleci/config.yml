@@ -8,6 +8,12 @@ version: 2.1
 
 jobs:
   ubuntu-24-04:
+    environment:
+      ZEEK_CI_CONFIGURE_FLAGS: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
+      ZEEK_CI_CPUS: 4
+      ZEEK_CI_BTEST_JOBS: 4
+      ZEEK_CI_RUNNER_OS: linux
+      ZEEK_TEST_ULIMIT_OPEN_FILES: 256
     docker:
       - image: ubuntu:24.04
     steps:
@@ -67,9 +73,9 @@ jobs:
           name: Build
           command: ci/build.sh
           environment:
-            ZEEK_CI_CONFIGURE_FLAGS: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
-            ZEEK_CI_CPUS: 4
-            ZEEK_CI_RUNNER_OS: linux
+      - run:
+          name: Test
+          command: ci/test.sh
 
 workflows:
   build-and-test:
