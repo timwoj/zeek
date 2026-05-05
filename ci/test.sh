@@ -15,7 +15,7 @@ if [[ "${ZEEK_CI_RUNNER_OS}" == "darwin" ]]; then
     BTEST="sudo ${BTEST}"
 fi
 
-if [[ -z "${CIRCLE_CI}" ]]; then
+if [[ -z "${CIRCLECI}" ]]; then
     # Set default values to use in place of env. variables set by Circle.
     ZEEK_CI_CPUS=1
     [[ $(which nproc) ]] && ZEEK_CI_CPUS=$(nproc)
