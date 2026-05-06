@@ -15,6 +15,7 @@ jobs:
       ZEEK_CI_BTEST_RETRIES: 2
       ZEEK_CI_RUNNER_OS: linux
       ZEEK_TEST_ULIMIT_OPEN_FILES: 256
+      ZEEK_CI_SKIP_EXTERNAL_BTESTS: 1
     docker:
       - image: ubuntu:24.04
     steps:
@@ -97,6 +98,8 @@ jobs:
       - run:
           name: Test
           command: ci/test.sh
+      - store_test_results:
+          path: btest-results
 
 workflows:
   build-and-test:
