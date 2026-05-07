@@ -73,8 +73,11 @@ function prep_artifacts {
     [[ -d .tmp ]] && rm -rf .tmp/script-coverage && tar -czf tmp.tar.gz .tmp
     junit2html btest-results.xml btest-results.html
 
-    mkdir -p ${CIRCLE_WORKING_DIRECTORY}/btest-results/$1
-    cp btest-results.xml ${CIRCLE_WORKING_DIRECTORY}/btest-results/$1/results.xml
+    if [[ -n "${CIRCLECI}" ]]; then
+        # Copy these into a location where Circle can get to them easily for the tests view
+        mkdir -p ${CIRCLE_WORKING_DIRECTORY}/btest-results/$1
+        cp btest-results.xml ${CIRCLE_WORKING_DIRECTORY}/btest-results/$1/results.xml
+    fi
 }
 
 function run_btests {
