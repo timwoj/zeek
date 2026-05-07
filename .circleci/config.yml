@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  win: circleci/windows@5.0
+
 jobs:
   linux-build:
     parameters:
@@ -34,9 +37,9 @@ jobs:
           command: git submodule update --recursive --init
       - restore_cache:
           keys:
-            - ccache-{{ .Branch }}-{{ .Revision }}
-            - ccache-{{ .Branch }}-
-            - ccache-
+            - ccache-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ .Revision }}
+            - ccache-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-
+            - ccache-{{ .Environment.CIRCLE_JOB }}-
       - run:
           name: Setup ccache
           command: |
@@ -62,18 +65,91 @@ jobs:
       - store_test_results:
           path: btest-results
 
+  windows-build:
+    environment:
+      ZEEK_CI_CPUS: 4
+      ZEEK_CI_BTEST_JOBS: 2
+      ZEEK_CI_BTEST_RETRIES: 2
+      ZEEK_CI_RUNNER_OS: linux
+      ZEEK_TEST_ULIMIT_OPEN_FILES: 256
+      ZEEK_CI_SKIP_EXTERNAL_BTESTS: 1
+    executor: win/server-2022
+    steps:
+      - run:
+          name: Install Chocolatey dependencies
+          command: |
+            choco install -y --no-progress sed
+            choco install -y --no-progress winflexbison3
+            choco install -y --no-progress ccache
+            choco install -y --no-progress ninja
+      - run:
+          name: Enable git symlinks
+          command: git config --global core.symlinks true
+      - checkout:
+          # For some reason the default working path has stuff in it already so it can't clone into
+          # that. Unfortunately that means we have to change the working directory for every other
+          # command.
+          path: zeek
+      - run:
+          name: Update submodules
+          command: git submodule update --recursive --init
+          working_directory: zeek
+      - run:
+          name: Dump environment info
+          command: ci\windows\prepare.cmd
+          shell: cmd.exe
+          working_directory: zeek
+      - restore_cache:
+          name: Restore ccache
+          keys:
+            - v2-ccache-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ .Revision }}
+            - v2-ccache-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-
+            - v2-ccache-{{ .Environment.CIRCLE_JOB }}-
+      - restore_cache:
+          name: Restore vcpkg cache
+          keys:
+            - v2-vcpkg-{{ .Branch }}-{{ .Revision }}
+            - v2-vcpkg-{{ .Branch }}-
+            - v2-vcpkg-
+      - run:
+          name: Setup ccache
+          command: |
+            mkdir C:\tmp\zeek-ccache
+            ccache --set-config=max_size=2G
+            ccache --set-config=compression=true
+            ccache --set-config=cache_dir=C:\tmp\zeek-ccache
+            ccache --zero-stats
+            ccache --show-stats
+      - run:
+          name: Configure
+          command: ci\windows\configure.cmd
+          working_directory: zeek
+      - save_cache:
+          key: v2-vcpkg-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - zeek\auxil\vcpkg\packages
+      - run:
+          name: Build
+          command: ci\windows\build.cmd
+          working_directory: zeek
+      - save_cache:
+          key: v2-ccache-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - C:\tmp\zeek-ccache
+
 workflows:
   build-and-test:
     jobs:
-      - linux-build:
-          name: ubuntu-24.04
-          git_install: apt update && apt install -y git
-          configure: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
-          deps_script: ci/ubuntu-24.04/install_dependencies.sh
-          docker_image: ubuntu:24.04
-      - linux-build:
-          name: fedora-43
-          git_install: dnf -y install git
-          configure: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
-          deps_script: ci/fedora-43/install_dependencies.sh
-          docker_image: fedora:43
+      - windows-build
+      # - linux-build:
+      #     name: ubuntu-24.04
+      #     git_install: apt update && apt install -y git
+      #     configure: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
+      #     deps_script: ci/ubuntu-24.04/install_dependencies.sh
+      #     docker_image: ubuntu:24.04
+      # - linux-build:
+      #     name: fedora-43
+      #     git_install: dnf -y install git
+      #     configure: --build-type=release --disable-broker-tests --prefix=$CIRRUS_WORKING_DIR/install --ccache --enable-werror
+      #     deps_script: ci/fedora-43/install_dependencies.sh
+      #     docker_image: fedora:43
