@@ -73,7 +73,9 @@ jobs:
       ZEEK_CI_RUNNER_OS: linux
       ZEEK_TEST_ULIMIT_OPEN_FILES: 256
       ZEEK_CI_SKIP_EXTERNAL_BTESTS: 1
-    executor: win/server-2022
+    executor:
+      name: win/server-2022
+      size: large
     steps:
       - run:
           name: Install Chocolatey dependencies
@@ -125,6 +127,7 @@ jobs:
           command: ci\windows\configure.cmd
           working_directory: zeek
       - save_cache:
+          name: Saving vcpkg build cache
           key: v2-vcpkg-{{ .Branch }}-{{ .Revision }}
           paths:
             - zeek\auxil\vcpkg\packages
