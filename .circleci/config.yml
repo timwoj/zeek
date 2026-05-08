@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@5.0
+  win: circleci/windows@5.1.1
 
 jobs:
   linux-build:
@@ -130,7 +130,9 @@ jobs:
           name: Saving vcpkg build cache
           key: v2-vcpkg-{{ .Branch }}-{{ .Revision }}
           paths:
+            - zeek\auxil\vcpkg\installed
             - zeek\auxil\vcpkg\packages
+            - zeek\auxil\vcpkg\downloads
       - run:
           name: Build
           command: ci\windows\build.cmd
